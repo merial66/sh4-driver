@@ -91,8 +91,8 @@
 #define EVENT_ANSWER_UNKNOWN2            0xef
 
 // Globals
-const char *driver_version = "1.08Audioniek";
-short paramDebug = 10;
+const char *driver_version = "1.09Audioniek";
+short paramDebug = 0;
 int waitTime = 1000;
 static unsigned char expectEventData = 0;
 static unsigned char expectEventId   = 1;
@@ -478,7 +478,7 @@ static void processResponse(void)
 				RCVBufferEnd = (RCVBufferEnd + cPackageSizeWakeUpReason) % BUFFERSIZE;
 				break;
 			}
-			default: // Ignore Response
+			default:  // Ignore Response
 			{
 				dprintk(1, "Invalid Response %02x\n", expectEventData);
 				dprintk(1, "start %d end %d\n",  RCVBufferStart,  RCVBufferEnd);
@@ -492,6 +492,7 @@ static void processResponse(void)
 			}
 		}
 	}
+
 out_switch:
 	expectEventId = 1;
 	expectEventData = 0;
@@ -802,7 +803,7 @@ static int __init micom_init_module(void)
 	}
 	else
 	{
-		dprintk(1, "Cannot get irq\n");
+		dprintk(1, "FP: Cannot get IRQ\n");
 	}
 	msleep(waitTime);
 	micom_init_func();
@@ -857,6 +858,8 @@ module_exit(micom_cleanup_module);
 MODULE_DESCRIPTION("MICOM frontcontroller module (CubeRevo Mini)");
 #elif defined(CUBEREVO_MINI2)
 MODULE_DESCRIPTION("MICOM frontcontroller module (CubeRevo Mini II)");
+#elif defined(CUBEREVO_MINI_FTA)
+MODULE_DESCRIPTION("MICOM frontcontroller module (CubeRevo mini FTA (200HD))");
 #elif defined(CUBEREVO_250HD)
 MODULE_DESCRIPTION("MICOM frontcontroller module (CubeRevo 250HD)");
 #elif defined(CUBEREVO)

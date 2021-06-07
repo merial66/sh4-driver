@@ -1,7 +1,26 @@
+/*
+ * cuberevo_micom.h
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ *
+ * header file for CubeRevo front panel driver.
+ *
+ ***************************************************************************/
 #ifndef _cuberevo_micom_h
 #define _cuberevo_micom_h
-/*
- */
 
 extern short paramDebug;
 
@@ -12,19 +31,6 @@ extern short paramDebug;
 		if ((paramDebug) && (paramDebug >= level)) printk(TAGDEBUG x); \
 	} while (0)
 #endif
-
-extern int micom_init_func(void);
-extern void copyData(unsigned char *data, int len);
-extern void getRCData(unsigned char *data, int *len);
-void dumpValues(void);
-
-extern int errorOccured;
-extern char *gmt_offset;  // module param, string
-extern int rtc_offset;
-/* number of display characters */
-extern int front_seg_num;
-
-extern struct file_operations vfd_fops;
 
 typedef struct
 {
@@ -49,7 +55,7 @@ extern tFrontPanelOpen FrontPanelOpen[LASTMINOR];
 #define VFDDRIVERINIT        0xc0425a08
 #define VFDICONDISPLAYONOFF  0xc0425a0a
 // comment next line to leave VFDTEST capabilities out
-#define VFDTEST              0xc0425af0  // added by audioniek
+//#define VFDTEST              0xc0425af0  // added by audioniek
 #define VFDCLEARICONS	     0xc0425af6
 #define VFDSETRF             0xc0425af7
 #define VFDSETFAN            0xc0425af8
@@ -66,10 +72,86 @@ extern tFrontPanelOpen FrontPanelOpen[LASTMINOR];
 #define VFDSETDISPLAYTIME    0xc0425b02
 #define VFDSETTIMEMODE       0xc0425b03
 #define VFDSETWAKEUPTIME     0xc0425b04
-#define VFDLEDBRIGHTNESS     0xc0425b05 /* Cuberevo/micom specific */
+#define VFDLEDBRIGHTNESS     0xc0425b05  /* Cuberevo/micom specific */
 
 // comment next line if you want left aligned text display
-#define CENTERED_DISPLAY
+//#define CENTERED_DISPLAY
+
+#if defined CENTERED_DISPLAY
+#if defined(CUBEREVO_250HD) \
+ || defined(CUBEREVO_MINI_FTA)
+#undef CENTERED_DISPLAY  // never center on LED models
+#endif
+#endif
+
+#define cNumberSymbols      8
+
+/***************************************************************************
+ *
+ * Icon definitions.
+ *
+ ***************************************************************************/
+#if defined(CUBEREVO) \
+ || defined(CUBEREVO_9500HD) 
+enum  // for 12 character dot matrix
+{
+	ICON_MIN = 0,  // 0
+	ICON_STANDBY,
+	ICON_SAT,
+	ICON_REC,
+	ICON_TIMESHIFT,
+	ICON_TIMER,    // 5
+	ICON_HD,
+	ICON_USB,
+	ICON_SCRAMBLED,
+	ICON_DOLBY,
+	ICON_MUTE,     // 10
+	ICON_TUNER1,
+	ICON_TUNER2,
+	ICON_MP3,
+	ICON_REPEAT,
+	ICON_PLAY,     // 15
+	ICON_TER,
+	ICON_FILE,
+	ICON_480i,
+	ICON_480p,
+	ICON_576i,     // 20
+	ICON_576p,
+	ICON_720p,
+	ICON_1080i,
+	ICON_1080p,
+	ICON_PLAY_1,   // 25
+	ICON_RADIO,
+	ICON_TV,
+	ICON_PAUSE,
+	ICON_MAX       // 29
+};
+#elif defined(CUBEREVO_MINI) \
+ ||   defined(CUBEREVO_MINI2) \
+ ||   defined(CUBEREVO_2000HD) \
+ ||   defined(CUBEREVO_3000HD)
+enum  // for 14 character dot matrix
+{
+	ICON_MIN,  // 0
+	ICON_REC,
+	ICON_TIMER,  // 2
+	ICON_TIMESHIFT,
+	ICON_PLAY,  // 4
+	ICON_PAUSE,
+	ICON_HD,  // 6
+	ICON_DOLBY,
+	ICON_MAX  // 8
+};
+#endif
+
+struct iconToInternal
+{
+	char *name;
+	u16 icon;
+	u8 codemsb;
+	u8 codelsb;
+	u8 segment;
+};
 
 struct set_test_s
 {
@@ -171,13 +253,28 @@ struct vfd_ioctl_data
 	unsigned char length;
 };
 
-#define LEAPYEAR(year) (!((year) % 4) && (((year) % 100) || !((year) % 400)))
-#define YEARSIZE(year) (LEAPYEAR(year) ? 366 : 365)
-static const int _ytab[2][12] =
+struct saved_data_s
 {
-	{ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
-	{ 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
+	int   length;  // length of last string written to fp display
+	char  data[128];  // last string written to fp display
+	int   fan;  // fan state
 };
 
-#endif
+void dumpValues(void);
+extern int micom_init_func(void);
+extern void copyData(unsigned char *data, int len);
+extern void getRCData(unsigned char *data, int *len);
+
+extern int errorOccured;
+extern char *gmt_offset;  // module param, string
+extern int rtc_offset;
+
+/* number of display characters */
+extern int front_seg_num;
+
+extern struct file_operations vfd_fops;
+
+extern struct saved_data_s lastdata;
+
+#endif  // _cuberevo_micom_h
 // vim:ts=4
