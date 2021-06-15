@@ -29,6 +29,7 @@
  * Date     By              Description
  * --------------------------------------------------------------------------
  * 20170313 Audioniek       Initial version based on tffpprocfs.c.
+ * 20210614 Audioniek       Add /proc/stb/lcd/symbol_hdd.
  * 
  ****************************************************************************/
 
@@ -51,6 +52,14 @@
  *             +--- led_patternspeed (rw)   Blink speed for pattern (not implemented)
  *             +--- oled_brightness (w)     Direct control of display brightness
  *             +--- text (w)                Direct writing of display text
+ *
+ *  /proc/stb/lcd/
+ *             |
+ *             +--- symbol_hdd (rw)         Control of hdd icon (not on UFS910)
+ *
+ *  /proc/stb/power
+ *             |
+ *             +--- vfd (rw)                Front panel display on/off
  */
 
 /* from e2procfs */
@@ -70,6 +79,8 @@ extern int micomSetTime(char *time);
 extern int micomSetLED(int which, int level);
 //extern int micomGetWakeUpTime(char *time);
 extern int micomSetWakeUpTime(char *time);
+extern int micomSetIcon(int which, int on);
+extern int micomSetDisplayOnOff(unsigned char level);
 
 /* Globals */
 static int rtc_offset = 3600;
@@ -78,6 +89,112 @@ static int rtc_offset = 3600;
 static u32 led0_pattern = 0;
 static u32 led1_pattern = 0;
 static int led_pattern_speed = 20;
+#if !defined(UFS910)
+static int symbol_hdd = 0;
+#endif
+static int vfd_on = 1;
+
+#if !defined(UFS910)
+static int symbol_hdd_write(struct file *file, const char __user *buf, unsigned long count, void *data)
+{
+	char* page;
+	ssize_t ret = -ENOMEM;
+	char* myString;
+	int i = 0;
+
+	page = (char*)__get_free_page(GFP_KERNEL);
+
+	if (page)
+	{
+		ret = -EFAULT;
+		if (copy_from_user(page, buf, count))
+		{
+			goto out;
+		}
+		myString = (char*) kmalloc(count + 1, GFP_KERNEL);
+		strncpy(myString, page, count);
+		myString[count - 1] = '\0';
+
+		sscanf(myString, "%d", &symbol_hdd);
+		kfree(myString);
+
+		symbol_hdd = (symbol_hdd == 0 ? 0 : 1);
+		ret = micomSetIcon(ICON_HDD, symbol_hdd);
+		if (ret)
+		{
+			goto out;
+		}
+		/* always return count to avoid endless loop */
+		ret = count;
+		goto out;
+	}
+
+out:
+	free_page((unsigned long)page);
+	return ret;
+}
+
+static int symbol_hdd_read(char *page, char **start, off_t off, int count, int *eof, void *data)
+{
+	int len = 0;
+
+	if (NULL != page)
+	{
+		len = sprintf(page,"%d", symbol_hdd);
+	}
+	return len;
+}
+#endif
+
+static int vfd_onoff_write(struct file *file, const char __user *buf, unsigned long count, void *data)
+{
+	char* page;
+	ssize_t ret = -ENOMEM;
+	char* myString;
+	int i = 0;
+
+	page = (char*)__get_free_page(GFP_KERNEL);
+
+	if (page)
+	{
+		ret = -EFAULT;
+		if (copy_from_user(page, buf, count))
+		{
+			goto out;
+		}
+		myString = (char*) kmalloc(count + 1, GFP_KERNEL);
+		strncpy(myString, page, count);
+		myString[count - 1] = '\0';
+
+		sscanf(myString, "%d", &vfd_on);
+		kfree(myString);
+
+		vfd_on = (vfd_on == 0 ? 0 : 1);
+		ret = micomSetDisplayOnOff((char)vfd_on);
+		if (ret)
+		{
+			goto out;
+		}
+		/* always return count to avoid endless loop */
+		ret = count;
+		goto out;
+	}
+
+out:
+	free_page((unsigned long)page);
+	return ret;
+}
+
+static int vfd_onoff_read(char *page, char **start, off_t off, int count, int *eof, void *data)
+{
+	int len = 0;
+
+	if (NULL != page)
+	{
+		len = sprintf(page,"%d", lastdata.display_on);
+	}
+	return len;
+}
 
 static int text_write(struct file *file, const char __user *buf, unsigned long count, void *data)
 {
@@ -576,6 +693,10 @@ struct fp_procs
 	{ "stb/fp/wakeup_time", NULL, wakeup_time_write },
 	{ "stb/fp/was_timer_wakeup", was_timer_wakeup_read, NULL },
 	{ "stb/fp/version", fp_version_read, NULL },
+#if !defined(UFS910)
+	{ "stb/lcd/symbol_hdd", symbol_hdd_read, symbol_hdd_write },
+#endif
+	{ "stb/power/vfd", vfd_onoff_read, vfd_onoff_write }
 };
 
 void create_proc_fp(void)

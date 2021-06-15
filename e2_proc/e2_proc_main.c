@@ -1075,6 +1075,10 @@ struct ProcStructure_s e2Proc[] =
 #endif
 #if defined(SPARK7162) \
  || defined(TF7700) \
+ || defined(UFS912) \
+ || defined(UFS913) \
+ || defined(UFS922) \
+ || defined(UFC960) \
  || defined(HL101) \
  || defined(VIP1_V1) \
  || defined(VIP1_V2) \
@@ -1349,13 +1353,15 @@ struct ProcStructure_s e2Proc[] =
  || defined(IPBOX9900) \
  || defined(IPBOX99) \
  || defined(ADB_BOX) \
+ || defined(UFS922) \
  || defined(SAGEMCOM88) \
  || defined(PACE7241)
 	{cProcEntry, "stb/fp/fan",                                                       NULL, NULL, NULL, NULL, ""},
 #endif
 #if defined(ADB_BOX) \
  || defined(IPBOX9900) \
- || defined(IPBOX99)
+ || defined(IPBOX99) \
+ || defined(UFS922)
 	{cProcEntry, "stb/fp/fan_pwm",                                                   NULL, NULL, NULL, NULL, ""},
 #endif
 

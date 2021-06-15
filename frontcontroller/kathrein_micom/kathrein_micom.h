@@ -145,6 +145,15 @@ struct vfd_ioctl_data
 	unsigned char length;
 };
 
+struct saved_data_s
+{
+	int           length;
+	char          data[20];
+	unsigned char brightness;
+	unsigned char ledbrightness;
+	int           display_on;
+};
+
 #if defined(UFS922) || defined(UFC960)
 enum
 {
@@ -201,5 +210,7 @@ enum
 #define VFD_LENGTH 16
 #define VFD_CHARSIZE 1
 #endif
+
+extern struct saved_data_s lastdata;
 
 #endif

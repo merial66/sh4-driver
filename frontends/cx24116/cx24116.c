@@ -87,8 +87,9 @@ static short paramDebug = 0;
 		if (paramDebug > level) printk(TAGDEBUG x); \
 	} while (0)
 
-#if !defined(ARIVALINK200)
-extern int _12v_isON; //defined in e2_proc ->I will implement a better mechanism later
+#if !defined(ARIVALINK200) \
+ && !defined(UFS922)
+extern int _12v_isON;  // defined in e2_proc ->I will implement a better mechanism later
 #else
 static int _12v_isON = 0;
 #endif
